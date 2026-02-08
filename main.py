@@ -11,8 +11,12 @@ app = FastAPI()
 class TaskRequest(BaseModel):
     instruction: str
 
+from pydantic import ConfigDict, BaseModel
+
 # Fix: Custom class to add the missing 'provider' attribute
 class CustomChatAnthropic(ChatAnthropic):
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
