@@ -1,5 +1,5 @@
 fastapi
 uvicorn
-browser-use
+browser-use==0.8.1
 langchain-anthropic
 playwright
