@@ -22,9 +22,9 @@ def home():
 async def run_agent(request: TaskRequest):
     try:
         # Initialize the model using the browser-use wrapper
-        # Using 'model' parameter as per official docs
+        # Using the current Sonnet 4.5 model
         llm = ChatAnthropic(
-            model="claude-3-5-sonnet-20240620",
+            model="claude-sonnet-4-5-20250929",
             temperature=0.0
         )
 
