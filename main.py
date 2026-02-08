@@ -69,9 +69,22 @@ async def run_agent(request: TaskRequest):
         history = await agent.run()
         
         # 5. Extract the result
-        # 'history' is a complex object, we want the final string
         result = history.final_result()
         
+        if not result:
+            if history.is_done():
+                result = "Agent finished but returned no specific result. Check logs."
+            elif history.has_errors():
+                result = f"Agent encountered errors: {history.errors()}"
+            elif history.steps:
+                last_step = history.steps[-1]
+                if last_step.model_output:
+                    result = str(last_step.model_output)
+                else:
+                    result = "No result produced."
+            else:
+                result = "No result produced."
+
         return {
             "status": "success",
             "result": result
