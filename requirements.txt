@@ -1,5 +1,6 @@
 fastapi
 uvicorn
-browser-use==0.8.1
+browser-use
 langchain-anthropic
 playwright
+python-dotenv

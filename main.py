@@ -1,32 +1,18 @@
 import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from langchain_anthropic import ChatAnthropic
 from browser_use import Agent
+# Use the official browser-use wrapper for Anthropic
+from browser_use import ChatAnthropic
 import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
-# Input schema
 class TaskRequest(BaseModel):
     instruction: str
-
-from pydantic import ConfigDict, BaseModel
-
-# Fix: Custom class to add the missing 'provider' attribute
-class CustomChatAnthropic(ChatAnthropic):
-    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    @property
-    def provider(self):
-        return "anthropic"
-
-    @property
-    def model_name(self):
-        return self.model
 
 @app.get("/")
 def home():
@@ -34,25 +20,16 @@ def home():
 
 @app.post("/run")
 async def run_agent(request: TaskRequest):
-    """
-    Sends the AI agent to the Power BI dashboard to execute the instruction.
-    """
     try:
-        # 1. Setup the Brain (Claude 3.5 Sonnet is BEST for computer use)
-        # It will automatically look for 'ANTHROPIC_API_KEY' in env variables
-        llm = CustomChatAnthropic(
-            model_name="claude-3-5-sonnet-20240620", 
+        # Initialize the model using the browser-use wrapper
+        # Using 'model' parameter as per official docs
+        llm = ChatAnthropic(
+            model="claude-3-5-sonnet-20240620",
             temperature=0.0
         )
 
-        # 2. Define the exact Power BI URL
-        # We hardcode this so you don't have to pass it every time, 
-        # but you can make it dynamic if you want.
         power_bi_url = "https://app.powerbi.com/view?r=eyJrIjoiNGI5OWM4NzctMDExNS00ZTBhLWIxMmYtNzIyMTJmYTM4MzNjIiwidCI6IjMwN2E1MzQyLWU1ZjgtNDZiNS1hMTBlLTBmYzVhMGIzZTRjYSIsImMiOjl9"
         
-        # 3. Create the Agent
-        # We prepend the navigation command to your instruction
-        # We also instruct it to be explicit with the final answer
         final_task = (
             f"Go to {power_bi_url}. Wait for the dashboard to fully load (wait 5 seconds). "
             f"{request.instruction} "
@@ -64,27 +41,24 @@ async def run_agent(request: TaskRequest):
             llm=llm,
         )
 
-        # 4. Execute
-        # The agent will open a headless browser, click/read, and return the result
         history = await agent.run()
         
-        # 5. Extract the result
+        # Robust result extraction with fallback
         result = history.final_result()
-        
         if not result:
-            if history.is_done():
+             if history.is_done():
                 result = "Agent finished but returned no specific result. Check logs."
-            elif history.has_errors():
+             elif history.has_errors():
                 result = f"Agent encountered errors: {history.errors()}"
-            elif history.steps:
+             elif history.steps:
                 last_step = history.steps[-1]
                 if last_step.model_output:
                     result = str(last_step.model_output)
                 else:
                     result = "No result produced."
-            else:
+             else:
                 result = "No result produced."
-
+        
         return {
             "status": "success",
             "result": result
