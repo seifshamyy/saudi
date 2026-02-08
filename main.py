@@ -11,6 +11,15 @@ app = FastAPI()
 class TaskRequest(BaseModel):
     instruction: str
 
+# Fix: Custom class to add the missing 'provider' attribute
+class CustomChatAnthropic(ChatAnthropic):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @property
+    def provider(self):
+        return "anthropic"
+
 @app.get("/")
 def home():
     return {"status": "Power BI Agent is Awake"}
@@ -23,7 +32,7 @@ async def run_agent(request: TaskRequest):
     try:
         # 1. Setup the Brain (Claude 3.5 Sonnet is BEST for computer use)
         # It will automatically look for 'ANTHROPIC_API_KEY' in env variables
-        llm = ChatAnthropic(
+        llm = CustomChatAnthropic(
             model_name="claude-3-5-sonnet-20240620", 
             temperature=0.0
         )
