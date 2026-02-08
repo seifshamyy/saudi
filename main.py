@@ -24,6 +24,10 @@ class CustomChatAnthropic(ChatAnthropic):
     def provider(self):
         return "anthropic"
 
+    @property
+    def model_name(self):
+        return self.model
+
 @app.get("/")
 def home():
     return {"status": "Power BI Agent is Awake"}
