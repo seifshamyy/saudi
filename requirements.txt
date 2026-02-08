@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+browser-use
+langchain-anthropic
+playwright
