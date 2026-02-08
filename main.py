@@ -52,7 +52,12 @@ async def run_agent(request: TaskRequest):
         
         # 3. Create the Agent
         # We prepend the navigation command to your instruction
-        final_task = f"Go to {power_bi_url}. Wait for the dashboard to fully load (wait 5 seconds). {request.instruction}"
+        # We also instruct it to be explicit with the final answer
+        final_task = (
+            f"Go to {power_bi_url}. Wait for the dashboard to fully load (wait 5 seconds). "
+            f"{request.instruction} "
+            "IMPORTANT: Once you have the answer, you must use the 'finish' tool to output it clearly."
+        )
         
         agent = Agent(
             task=final_task,
@@ -61,11 +66,15 @@ async def run_agent(request: TaskRequest):
 
         # 4. Execute
         # The agent will open a headless browser, click/read, and return the result
-        result = await agent.run()
+        history = await agent.run()
+        
+        # 5. Extract the result
+        # 'history' is a complex object, we want the final string
+        result = history.final_result()
         
         return {
             "status": "success",
-            "agent_result": result
+            "result": result
         }
 
     except Exception as e:
